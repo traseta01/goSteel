@@ -94,6 +94,32 @@ func main() {
 
 	contentHello := container.New(layout.NewHBoxLayout(), layout.NewSpacer(), text1, layout.NewSpacer())
 
+	labelRuler := widget.NewLabel("_________________________________________________________________________________________\nPodaci o građaninu\n _________________________________________________________________________________________")
+	// labelRuler01 := widget.NewLabel("________________________________________________________________________________________")
+	labelRuler02 := widget.NewLabel("________________________________________________________________________________________")
+	labelPrezime := widget.NewLabel("Prezime:  ")
+	labelIme := widget.NewLabel("Ime:    ")
+	labelImeRoditelja := widget.NewLabel("Ime jednog roditelja:    ")
+	labelPol := widget.NewLabel("Pol:    ")
+	labeljmbg := widget.NewLabel("JMBG:    ")
+	labelDatumRodjenja := widget.NewLabel("Datum rodjenja:    ")
+	labelMestoRodjenjaOpstinaDrzava := widget.NewLabel("Mesto rodjenja, opstina i drzava:    ")
+
+	labelPrebivalisteAdresa := widget.NewLabel("Prebivalište i adresa stana:    ")
+	contentImePrezime := container.New(
+		layout.NewVBoxLayout(),
+		labelRuler,
+		labelIme,
+		labelPrezime,
+		labelImeRoditelja,
+		labelDatumRodjenja,
+		labelMestoRodjenjaOpstinaDrzava,
+		labelPrebivalisteAdresa,
+		labeljmbg,
+		labelPol,
+		// labelRuler01,
+		labelRuler02,
+	)
 	// container to display e-card image
 	contentImage := container.New(layout.NewHBoxLayout())
 
@@ -126,7 +152,7 @@ func main() {
 	contetButtons := container.New(layout.NewHBoxLayout(), buttonScan, layout.NewSpacer(), buttonGenPdf)
 
 	// set fyne window contents and attributes
-	windw.SetContent(container.New(layout.NewVBoxLayout(), contetButtons, contentHello, contentImage))
+	windw.SetContent(container.New(layout.NewVBoxLayout(), contetButtons, contentHello, contentImage, contentImePrezime))
 	windw.Resize(fyne.NewSize(800, 900))
 	windw.SetFixedSize(true)
 	windw.CenterOnScreen()
@@ -146,7 +172,7 @@ func sendCommand(apducommand []byte, card *smartcard.Card) []byte {
 }
 
 // get image from ID card
-func (lk *LicnaKarta) getImage(card *smartcard.Card) {
+func (lkarta *LicnaKarta) getImage(card *smartcard.Card) {
 	image := []byte{}
 	apdu := []byte{}
 
@@ -219,7 +245,7 @@ func (lk *LicnaKarta) getImage(card *smartcard.Card) {
 
 	// Type2 Card
 	// file starts at 10 bytes offset
-	lk.slika = image[8:]
+	lkarta.slika = image[8:]
 
 	fmt.Printf("%x", lk.slika)
 }
