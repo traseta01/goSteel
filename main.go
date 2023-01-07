@@ -129,6 +129,9 @@ func main() {
 	buttonScan := widget.NewButton("Scan", func() {
 
 		lk.getImage(card)
+
+		lk.readDataOne(card)
+
 		// prepare image
 		img, _, err := image.Decode(bytes.NewReader(lk.slika))
 		if err != nil {
@@ -235,7 +238,7 @@ func (lkarta *LicnaKarta) getImage(card *smartcard.Card) {
 		image = append(image, pomocna01[len(pomocna01)-1])
 
 	}
-	// newer card types
+	// new card types
 	// ATR: 3B FF 94 00 00 81 31 80 43 80 31 80 65 B0 85 02 01 F3 12 0F FF 82 90 00 79
 	// ATR: 3B B9 18 00 81 31 FE 9E 80 73 FF 61 40 83 00 00 00 DF
 
@@ -248,4 +251,55 @@ func (lkarta *LicnaKarta) getImage(card *smartcard.Card) {
 	lkarta.slika = image[8:]
 
 	fmt.Printf("%x", lk.slika)
+}
+
+// read data from ID card
+func (lkarta *LicnaKarta) readDataOne(card *smartcard.Card) {
+
+	apdu := []byte{}
+
+	// apdu = append(apdu, 0x00, 0xA4, 0x08, 0x00, 0x02, 0x0f, 0x02)
+	// Type2
+	apdu = append(apdu, 0x00, 0xA4, 0x08, 0x00, 0x02, 0x0f, 0x02, 0x00)
+	offset := sendCommand(smartcard.CommandAPDU(apdu), card)[3]
+	fmt.Printf("\n\n%x\n\n", offset)
+
+	apdu = []byte{}
+	// apdu = append(apdu, 0x00, 0xB0, 0x00, 0x08, 0x00)
+	apdu = append(apdu, 0x00, 0xB0, 0x00, 0x00, offset)
+	pom := sendCommand(smartcard.CommandAPDU(apdu), card)
+
+	fmt.Println("%x\n------------------------\n\n", pom)
+
+	// drop first 4 bytes
+	pom = pom[4:]
+	fmt.Print("%x\n", pom)
+
+	// read bytes of data
+	lkarta.brojDokumenta = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nBR DOKUMENTA (Prvi podatak) : %s", lkarta.brojDokumenta)
+	// pom = pom[2+pom[0]:]
+	pom = pom[4+pom[2]:]
+	fmt.Printf("\n\nBR (Drugi podatak) : %s", string(pom[4:pom[2]+4]))
+	pom = pom[4+pom[2]:]
+	fmt.Printf("\n\nBR (Treci podatak) : %s", string(pom[4:pom[2]+4]))
+	pom = pom[4+pom[2]:]
+	fmt.Printf("\n\nBR (Cetvrti podatak) : %s", string(pom[4:pom[2]+4]))
+	pom = pom[4+pom[2]:]
+	lkarta.datumIzdavanja = pretyDate(string(pom[4 : pom[2]+4]))
+	fmt.Printf("\n\nBR (Peti podatak) Datum Izdavanja: %s", lkarta.datumIzdavanja)
+	pom = pom[4+pom[2]:]
+	lkarta.vaziDo = pretyDate(string(pom[4 : pom[2]+4]))
+	fmt.Printf("\n\nBR (Peti podatak) Datum Izdavanja: %s", lkarta.vaziDo)
+	pom = pom[4+pom[2]:]
+	lkarta.dokumentIzdaje = pretyDate(string(pom[4 : pom[2]+4]))
+	fmt.Printf("\n\nIZADATA OD : %s", lkarta.dokumentIzdaje)
+	// fmt.Printf("\n\nZEMLJA : %s", string(pom[4:pom[2]+4]))
+	// pom = pom[4+pom[2]:]
+}
+
+func pretyDate(date string) string {
+
+	return date[:2] + "." + date[2:4] + "." + date[4:]
+
 }
