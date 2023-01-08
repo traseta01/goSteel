@@ -33,11 +33,14 @@ type LicnaKarta struct {
 	datumIzdavanja  string
 	vaziDo          string
 	prebivaliste    string
+	adresaDrzava    string
 	adresaMesto     string
 	adresaOpstina   string
 	adresaUlica     string
 	adresaBroj      string
 	adresaStan      string
+	adresaUlaz      string
+	adresaSprat     string
 	slika           []byte
 }
 
@@ -105,8 +108,8 @@ func main() {
 	labeljmbg := widget.NewLabel("JMBG:    ")
 	labelDatumRodjenja := widget.NewLabel("Datum rodjenja:    ")
 	labelMestoRodjenjaOpstinaDrzava := widget.NewLabel("Mesto rodjenja, opstina i drzava:    ")
-
 	labelPrebivalisteAdresa := widget.NewLabel("Prebivalište i adresa stana:    ")
+
 	contentImePrezime := container.New(
 		layout.NewVBoxLayout(),
 		labelRuler,
@@ -141,11 +144,24 @@ func main() {
 			log.Fatalln(err)
 		}
 
+		// show data on the UI
+		labelPrezime.SetText("Prezime:   " + lk.prezime)
+		labelIme.SetText("Ime:    " + lk.ime)
+		labelImeRoditelja.SetText("Ime jednog roditelja:    " + lk.imeRoditelja)
+		labelDatumRodjenja.SetText("Datum rodjenja:    " + lk.datumRodjenja)
+		labelMestoRodjenjaOpstinaDrzava.SetText("Mesto rođenja, opština i država:  " + lk.mestoRodjenja + ", " + lk.opstinaRodjenja + ", " + lk.drzavaRodjenja)
+		labelPrebivalisteAdresa.SetText("Prebivalište:  " + lk.prebivaliste)
+		labeljmbg.SetText("JMBG:    " + lk.JMBG)
+		labelPol.SetText("Pol:    " + lk.pol)
+
 		imagee = canvas.NewImageFromImage(img)
 		imagee.FillMode = canvas.ImageFillOriginal
 
 		contentImage.AddObject(imagee)
 		contentImage.Refresh()
+		contentImePrezime.Refresh()
+
+		// fmt.Printf("%+v\n", lk)
 	})
 
 	buttonGenPdf := widget.NewButton("Create PDF", func() {
@@ -198,8 +214,6 @@ func (lkarta *LicnaKarta) getImage(card *smartcard.Card) {
 	apdu = append(apdu, 0x00, 0xB0, 0x00, 0x00, 0xff)
 	pom := sendCommand(smartcard.CommandAPDU(apdu), card)
 
-	fmt.Printf("%x\n\n\n\n", pom)
-
 	imglen := pom[7]
 	imglast := pom[6]
 
@@ -250,7 +264,7 @@ func (lkarta *LicnaKarta) getImage(card *smartcard.Card) {
 	// file starts at 10 bytes offset
 	lkarta.slika = image[8:]
 
-	fmt.Printf("%x", lk.slika)
+	// fmt.Printf("%x", lk.slika)
 }
 
 // read first set of data from ID card
@@ -262,39 +276,42 @@ func (lkarta *LicnaKarta) readDataOne(card *smartcard.Card) {
 	// Type2
 	apdu = append(apdu, 0x00, 0xA4, 0x08, 0x00, 0x02, 0x0f, 0x02, 0x00)
 	offset := sendCommand(smartcard.CommandAPDU(apdu), card)[3]
-	fmt.Printf("\n\n%x\n\n", offset)
+	// fmt.Printf("\n\n%x\n\n", offset)
 
 	apdu = []byte{}
 	// apdu = append(apdu, 0x00, 0xB0, 0x00, 0x08, 0x00)
 	apdu = append(apdu, 0x00, 0xB0, 0x00, 0x00, offset)
 	pom := sendCommand(smartcard.CommandAPDU(apdu), card)
 
-	fmt.Println("%x\n------------------------\n\n", pom)
-
 	// drop first 4 bytes
 	pom = pom[4:]
-	fmt.Print("%x\n", pom)
 
 	// read bytes of data
 	lkarta.brojDokumenta = string(pom[4 : pom[2]+4])
-	fmt.Printf("\n\nBR DOKUMENTA (Prvi podatak) : %s", lkarta.brojDokumenta)
+	fmt.Printf("\nBR DOKUMENTA : %s", lkarta.brojDokumenta)
 	// pom = pom[2+pom[0]:]
+
 	pom = pom[4+pom[2]:]
-	fmt.Printf("\n\nBR (Drugi podatak) : %s", string(pom[4:pom[2]+4]))
+	fmt.Printf("\n Oznaka Drzave: %s", string(pom[4:pom[4+pom[2]]]))
+
 	pom = pom[4+pom[2]:]
-	fmt.Printf("\n\nBR (Treci podatak) : %s", string(pom[4:pom[2]+4]))
+	fmt.Printf("\n ID : %s", string(pom[4:pom[4+pom[2]]]))
+
 	pom = pom[4+pom[2]:]
-	fmt.Printf("\n\nBR (Cetvrti podatak) : %s", string(pom[4:pom[2]+4]))
+	fmt.Printf("\n  : %s", string(pom[4:pom[4+pom[2]]]))
+
 	pom = pom[4+pom[2]:]
 	lkarta.datumIzdavanja = pretyDate(string(pom[4 : pom[2]+4]))
-	fmt.Printf("\n\nBR (Peti podatak) Datum Izdavanja: %s", lkarta.datumIzdavanja)
+	fmt.Printf("\n Datum Izdavanja: %s", lkarta.datumIzdavanja)
+
 	pom = pom[4+pom[2]:]
 	lkarta.vaziDo = pretyDate(string(pom[4 : pom[2]+4]))
-	fmt.Printf("\n\nBR (Peti podatak) Datum Izdavanja: %s", lkarta.vaziDo)
+	fmt.Printf("\n  Vazi do: %s", lkarta.vaziDo)
+
 	pom = pom[4+pom[2]:]
 	lkarta.dokumentIzdaje = pretyDate(string(pom[4 : pom[2]+4]))
 	fmt.Printf("\n\nIZADATA OD : %s", lkarta.dokumentIzdaje)
-	// fmt.Printf("\n\nZEMLJA : %s", string(pom[4:pom[2]+4]))
+	// fmt.Printf("\n\nZEMLJA : %s", lkarta)
 	// pom = pom[4+pom[2]:]
 }
 
@@ -304,74 +321,111 @@ func (lkarta *LicnaKarta) readDataTwo(card *smartcard.Card) {
 
 	apdu = append(apdu, 0x00, 0xA4, 0x08, 0x00, 0x02, 0x0f, 0x03, 0x00)
 	offset := sendCommand(smartcard.CommandAPDU(apdu), card)[3]
-	fmt.Printf("\n\n%x\n\n", offset)
+	fmt.Printf("\nOFFSET 2\n%x\n\n", offset)
 
 	apdu = []byte{}
 	// apdu = append(apdu, 0x00, 0xB0, 0x00, 0x08, 0x00)
 	apdu = append(apdu, 0x00, 0xB0, 0x00, 0x00, offset)
 	pom := sendCommand(smartcard.CommandAPDU(apdu), card)
-	pom = pom[4:]
-	fmt.Printf("\n\n (Prvi podatak) : %s", string(pom[4:pom[2]+4]))
 
+	pom = pom[4:]
 	lkarta.JMBG = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\n (READ TWO JMBG) : %s", lkarta.JMBG)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nPREZIME : %s", string(pom[4:pom[2]+4]))
 	lkarta.prezime = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nPREZIME : %s", lkarta.prezime)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nIME : %s", string(pom[4:pom[2]+4]))
 	lkarta.ime = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nIME : %s", lkarta.ime)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nIME OCA : %s", string(pom[4:pom[2]+4]))
 	lkarta.imeRoditelja = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nIME RODITELJA : %s", lkarta.imeRoditelja)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nPOL : %s", string(pom[4:pom[2]+4]))
 	lkarta.pol = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nPOL : %s", lk.pol)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nMESTO RODJENJAr:   %s", string(pom[4:pom[2]+4]))
 	lkarta.mestoRodjenja = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nMESTO RODJENJAr:   %s", lkarta.mestoRodjenja)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nOpstina rodjenja:  %s", string(pom[4:pom[2]+4]))
 	lkarta.opstinaRodjenja = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nOpstina rodjenja:  %s", lkarta.opstinaRodjenja)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nDRZAVA : %s", string(pom[4:pom[2]+4]))
 	lkarta.drzavaRodjenja = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nDRZAVA : %s", lkarta.drzavaRodjenja)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nDATUM RODJENJA : %s", string(pom[4:pom[2]+4]))
 	lkarta.datumRodjenja = pretyDate(string(pom[4 : pom[2]+4]))
+	fmt.Printf("\n\nDATUM RODJENJA : %s", lkarta.datumRodjenja)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nDRZAVA SKRACENO : %s", string(pom[4:pom[2]+4]))
+	fmt.Printf("\n\nDRZAVA SKRACENO : %s", string(pom[4:pom[2]+4]))
 }
 
 // read third set of information
-func (lk *LicnaKarta) readDataThree(card *smartcard.Card) {
+func (lkarta *LicnaKarta) readDataThree(card *smartcard.Card) {
 	apdu := []byte{}
 
 	apdu = append(apdu, 0x00, 0xA4, 0x08, 0x00, 0x02, 0x0f, 0x04, 0x00)
 	offset := sendCommand(smartcard.CommandAPDU(apdu), card)[3]
-	fmt.Printf("\n\n%x\n\n", offset)
+	fmt.Printf("\n\nOFFSET 3 %x\n\n", offset)
 
 	apdu = []byte{}
 	// apdu = append(apdu, 0x00, 0xB0, 0x00, 0x08, 0x00)
 	apdu = append(apdu, 0x00, 0xB0, 0x00, 0x00, offset)
 	pom := sendCommand(smartcard.CommandAPDU(apdu), card)
-	pom = pom[4:]
-	fmt.Printf("\n\n (Prvi podatak) : %s", string(pom[4:pom[2]+4]))
 
-	lk.adresaMesto = string(pom[4 : pom[2]+4])
+	pom = pom[4:]
+	lkarta.adresaDrzava = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n ADRESA DRZAVA : %s", lkarta.adresaDrzava)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nPREZIME : %s", string(pom[4:pom[2]+4]))
-	lk.adresaOpstina = string(pom[4 : pom[2]+4])
+	lkarta.adresaOpstina = string(pom[4 : pom[2]+4])
+	fmt.Printf("\nOPSTINA : %s", lkarta.adresaOpstina)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nIME : %s", string(pom[4:pom[2]+4]))
-	lk.adresaUlica = string(pom[4 : pom[2]+4])
+	lkarta.adresaMesto = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n ADRESA MESTO : %s", lkarta.adresaMesto)
+
 	pom = pom[4+pom[2]:]
-	fmt.Printf("\n\nIME OCA : %s", string(pom[4:pom[2]+4]))
-	lk.imeRoditelja = string(pom[4 : pom[2]+4])
+	lkarta.adresaUlica = string(pom[4 : pom[2]+4])
+	fmt.Printf("\nADRESA ULICA: : %s", lkarta.adresaUlica)
+
 	pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nSPRAT: %s", string(pom[4:pom[2]+4]))
-	// pom = pom[4+pom[2]:]
-	// fmt.Printf("\n\nSPRAT: %s", string(pom[4:pom[2]+4]))
+	lkarta.adresaBroj = string(pom[4 : pom[2]+4])
+	fmt.Printf("\nADRESA BROJ : %s", lkarta.adresaBroj)
+
+	pom = pom[4+pom[2]:]
+	lkarta.adresaUlaz = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nADRESA ULAZ: %s", lkarta.adresaUlaz)
+
+	pom = pom[4+pom[2]:]
+	lkarta.adresaSprat = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nI ADRESA SPRAT : %s", lkarta.adresaSprat)
+
+	pom = pom[4+pom[2]:]
+	lkarta.adresaStan = string(pom[4 : pom[2]+4])
+	fmt.Printf("\n\nI ADRESA STAN : %s", lkarta.adresaStan)
+
+	if lkarta.adresaSprat == "" {
+		fmt.Println("OK")
+	}
+
+	// construct prebivaliste string
+	lkarta.prebivaliste = lkarta.adresaOpstina + ", " + lkarta.adresaMesto + ", " + lkarta.adresaUlica + ", " + lkarta.adresaBroj
+	if lkarta.adresaSprat != "" && lkarta.adresaStan != "" {
+		lkarta.prebivaliste = lkarta.prebivaliste + "/" + lkarta.adresaSprat + "/" + lkarta.adresaStan
+	}
+
+	fmt.Printf("\n\n Prebivaliste: %s\n", lkarta.prebivaliste)
 }
+
 func pretyDate(date string) string {
 
 	return date[:2] + "." + date[2:4] + "." + date[4:]
