@@ -98,21 +98,26 @@ func main() {
 
 	contentHello := container.New(layout.NewHBoxLayout(), layout.NewSpacer(), text1, layout.NewSpacer())
 
-	labelRuler := widget.NewLabel("_________________________________________________________________________________________\nPodaci o građaninu\n _________________________________________________________________________________________")
-	// labelRuler01 := widget.NewLabel("________________________________________________________________________________________")
-	labelRuler02 := widget.NewLabel("________________________________________________________________________________________")
+	labelHeader01 := widget.NewLabel("_________________________________________________________________________________________\nPodaci o građaninu\n _________________________________________________________________________________________")
+	// labelRuler02 := widget.NewLabel("________________________________________________________________________________________")
 	labelPrezime := widget.NewLabel("Prezime:  ")
 	labelIme := widget.NewLabel("Ime:    ")
 	labelImeRoditelja := widget.NewLabel("Ime jednog roditelja:    ")
-	labelPol := widget.NewLabel("Pol:    ")
-	labeljmbg := widget.NewLabel("JMBG:    ")
 	labelDatumRodjenja := widget.NewLabel("Datum rodjenja:    ")
 	labelMestoRodjenjaOpstinaDrzava := widget.NewLabel("Mesto rodjenja, opstina i drzava:    ")
 	labelPrebivalisteAdresa := widget.NewLabel("Prebivalište i adresa stana:    ")
+	labeljmbg := widget.NewLabel("JMBG:    ")
+	labelPol := widget.NewLabel("Pol:    ")
+
+	labelHeader02 := widget.NewLabel("_________________________________________________________________________________________\nPodaci o dokumentu\n _________________________________________________________________________________________")
+	labelDokumentIzdaje := widget.NewLabel("Dokument izdaje: ")
+	labelBrDokumenta := widget.NewLabel("Broj dokumenta: ")
+	labelDatumIzdavanja := widget.NewLabel("Datum izdavanja: ")
+	labelVaziDo := widget.NewLabel("Vazi do: ")
 
 	contentImePrezime := container.New(
 		layout.NewVBoxLayout(),
-		labelRuler,
+		labelHeader01,
 		labelIme,
 		labelPrezime,
 		labelImeRoditelja,
@@ -122,7 +127,12 @@ func main() {
 		labeljmbg,
 		labelPol,
 		// labelRuler01,
-		labelRuler02,
+		// labelRuler02,
+		labelHeader02,
+		labelDokumentIzdaje,
+		labelBrDokumenta,
+		labelDatumIzdavanja,
+		labelVaziDo,
 	)
 	// container to display e-card image
 	contentImage := container.New(layout.NewHBoxLayout())
@@ -154,6 +164,11 @@ func main() {
 		labeljmbg.SetText("JMBG:    " + lk.JMBG)
 		labelPol.SetText("Pol:    " + lk.pol)
 
+		labelDokumentIzdaje.SetText("Dokument izdaje: " + lk.dokumentIzdaje)
+		labelBrDokumenta.SetText("Broj dokumenta: " + lk.brojDokumenta)
+		labelDatumIzdavanja.SetText("Datum izdavanja: " + lk.datumIzdavanja)
+		labelVaziDo.SetText("Vazi do: " + lk.vaziDo)
+
 		imagee = canvas.NewImageFromImage(img)
 		imagee.FillMode = canvas.ImageFillOriginal
 
@@ -165,15 +180,15 @@ func main() {
 	})
 
 	buttonGenPdf := widget.NewButton("Create PDF", func() {
-
+		GeneratePDF(lk)
 	})
 
 	contetButtons := container.New(layout.NewHBoxLayout(), buttonScan, layout.NewSpacer(), buttonGenPdf)
 
 	// set fyne window contents and attributes
-	windw.SetContent(container.New(layout.NewVBoxLayout(), contetButtons, contentHello, contentImage, contentImePrezime))
+	windw.SetContent(container.NewVScroll(container.New(layout.NewVBoxLayout(), contetButtons, contentHello, contentImage, contentImePrezime)))
 	windw.Resize(fyne.NewSize(800, 900))
-	windw.SetFixedSize(true)
+	// windw.SetFixedSize(true)
 	windw.CenterOnScreen()
 
 	windw.ShowAndRun()
