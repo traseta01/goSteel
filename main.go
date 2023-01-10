@@ -428,10 +428,6 @@ func (lkarta *LicnaKarta) readDataThree(card *smartcard.Card) {
 	lkarta.adresaStan = string(pom[4 : pom[2]+4])
 	fmt.Printf("\n\nI ADRESA STAN : %s", lkarta.adresaStan)
 
-	if lkarta.adresaSprat == "" {
-		fmt.Println("OK")
-	}
-
 	// construct prebivaliste string
 	lkarta.prebivaliste = lkarta.adresaOpstina + ", " + lkarta.adresaMesto + ", " + lkarta.adresaUlica + ", " + lkarta.adresaBroj
 	if lkarta.adresaSprat != "" && lkarta.adresaStan != "" {

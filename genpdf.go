@@ -239,7 +239,7 @@ func GeneratePDF(lk *LicnaKarta) {
 		})
 	})
 
-	err := m.OutputFileAndClose("zpl.pdf")
+	err := m.OutputFileAndClose(lk.brojDokumenta + ".pdf")
 	if err != nil {
 		fmt.Println("Could not save PDF:", err)
 		os.Exit(1)
