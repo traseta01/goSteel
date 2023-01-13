@@ -17,6 +17,6 @@ As stated [HERE][1] you have to install the PCSC-Lite daemon and CCID driver.
 
 Cards issued before 2015 are not supported. 
 
-If for some reason you **really ** need it feel free to contact me.
+If for some reason you **really** need it feel free to contact me.
 
 [1]: https://github.com/sf1/go-card/
