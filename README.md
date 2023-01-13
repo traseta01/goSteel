@@ -2,6 +2,7 @@
 Serbian identification card reader.
 
 Program to read serbian identification cards, aimed mainly at linux os.
+
 You can read data from the cards and print it to pdf file.
 
 
@@ -22,7 +23,7 @@ If for some reason you **really** need it feel free to contact me.
 [1]: https://github.com/sf1/go-card/
 
 
-## Screen shots
+## Screenshots
 
 ![goSteel_sample_02](https://user-images.githubusercontent.com/37847620/212207417-a4b9aced-cc2e-487e-91fc-d8646c4c10e7.png)
 
